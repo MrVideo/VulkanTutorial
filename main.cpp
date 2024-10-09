@@ -8,8 +8,8 @@
 #include <cstdlib>
 
 // Constants for the window size
-const uint32_t WIDTH = 800;
-const uint32_t HEIGHT = 600;
+const uint32_t WINDOW_WIDTH = 800;
+const uint32_t WINDOW_HEIGHT = 600;
 
 class HelloTriangleApplication {
 public:
@@ -44,7 +44,7 @@ private:
 		// 3. Window title
 		// 4. Monitor to open the window on
 		// 5. Only relevant to OpenGL
-		window = glfwCreateWindow(WIDTH, HEIGHT, "Vulkan", nullptr, nullptr);
+		window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Vulkan", nullptr, nullptr);
 	}
 
     void initVulkan() {
