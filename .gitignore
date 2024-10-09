@@ -1,0 +1,11 @@
+# Ignore all
+*
+
+# Except files with extensions
+!*.*
+
+# Ignore compiler configuration
+compile_commands.json
+
+# Ignore compiler cache directory
+.cache
