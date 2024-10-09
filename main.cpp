@@ -113,6 +113,8 @@ private:
 
 		createInfo.enabledExtensionCount = (uint32_t) requiredExtensions.size();
 		createInfo.ppEnabledExtensionNames = requiredExtensions.data();
+
+		std::cout << "[INFO ] Loaded extensions required for macOS\n";
 		#endif
 
 		// Finally, we can actually create our instance.
