@@ -56,6 +56,16 @@ void DestroyDebugUtilsMessengerEXT(VkInstance instance,
 	}
 }
 
+// This struct will contain all the queue family indices
+// found in the available devices.
+struct QueueFamilyIndices {
+	std::optional<uint32_t> graphicsFamily;
+
+	bool isComplete() {
+		return graphicsFamily.has_value();
+	}
+};
+
 class HelloTriangleApplication {
 public:
     void run() {
@@ -139,7 +149,8 @@ private:
 
 	// This function checks the properties of a given GPU passed to it
 	// and returns true if it is suitable for our use.
-	// NOTE: as this is a basic tutorial, we will settle for any available GPU.
+	// NOTE: as this is a basic tutorial, we will settle for any available GPU
+	// that has a graphics queue family available.
 	// The commented function is just to show a simple method of choosing a
 	// GPU based on its abilities.
 	// 
@@ -157,7 +168,45 @@ private:
 	// 	return deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU && deviceFeatures.geometryShader;
 	// }
 	bool isDeviceSuitable(VkPhysicalDevice device) {
-		return true;
+		VkPhysicalDeviceProperties deviceProperties;
+		vkGetPhysicalDeviceProperties(device, &deviceProperties);
+		
+		QueueFamilyIndices indices = findQueueFamilies(device);
+
+		if (indices.isComplete()) {
+			std::cout << "[INFO ] Device " << deviceProperties.deviceName << " selected!\n";
+			return true;
+		}
+
+		return false;
+	}
+
+	// This function returns the available queue families
+	// for the device passed to it.
+	QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device) {
+		QueueFamilyIndices indices;
+
+		// This code retrieves the queue families available for a particular device.
+		uint32_t queueFamilyCount = 0;
+		vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
+
+		std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
+		vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
+
+		int i = 0;
+		for (const auto &queueFamily: queueFamilies) {
+			if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
+				indices.graphicsFamily = i;
+			}
+
+			if (indices.isComplete()) {
+				break;
+			}
+
+			i++;
+		}
+
+		return indices;
 	}
 
 	void createInstance() {
