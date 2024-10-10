@@ -72,6 +72,12 @@ private:
 	// The object that stores the Vulkan instance
 	VkInstance instance;
 
+	// The object that stores the physical device which we
+	// will use to render images.
+	// NOTE: this does not have to be destroyed as it is 
+	// implicitly destroyed when our instance is destroyed.
+	VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
+
 	// The object that stores our custom callback messenger
 	VkDebugUtilsMessengerEXT debugMessenger;
 
@@ -98,7 +104,59 @@ private:
     void initVulkan() {
 		createInstance();
 		setupDebugMessenger();
+		pickPhysicalDevice();
     }
+
+	// This function will simply pick one of the available GPUs in the system
+	// to be used as our rendering device.
+	void pickPhysicalDevice() {
+		// Here, we simply list all the Vulkan-compatible devices available;
+		// if there are none, an error is thrown.
+		uint32_t deviceCount = 0;
+		vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
+
+		if (deviceCount == 0) {
+			throw std::runtime_error("[ERROR] Failed to find GPUs with Vulkan support!");
+		}
+
+		std::vector<VkPhysicalDevice> devices(deviceCount);
+		vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
+
+		// Now, we check whether the available devices are suitable for our uses.
+		for (const auto &device : devices) {
+			if (isDeviceSuitable(device)) {
+				physicalDevice = device;
+				break;
+			}
+		}
+
+		if (physicalDevice == VK_NULL_HANDLE) {
+			throw std::runtime_error("[ERROR] No suitable GPU found!");
+		}
+	}
+
+	// This function checks the properties of a given GPU passed to it
+	// and returns true if it is suitable for our use.
+	// NOTE: as this is a basic tutorial, we will settle for any available GPU.
+	// The commented function is just to show a simple method of choosing a
+	// GPU based on its abilities.
+	// 
+	// bool isDeviceSuitable(VkPhysicalDevice device) {
+	// 	// Here we check for the GPU's basic properties, like its name,
+	// 	// type, and supported Vulkan version.
+	// 	VkPhysicalDeviceProperties deviceProperties;
+	// 	vkGetPhysicalDeviceProperties(device, &deviceProperties);
+
+	// 	// Here we check optional features, such as texture compression
+	// 	// or 64-bit floats.
+	// 	VkPhysicalDeviceFeatures deviceFeatures;
+	// 	vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
+
+	// 	return deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU && deviceFeatures.geometryShader;
+	// }
+	bool isDeviceSuitable(VkPhysicalDevice device) {
+		return true;
+	}
 
 	void createInstance() {
 		// Check whether the required validation layers are available and throw
