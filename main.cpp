@@ -92,6 +92,13 @@ private:
 	// rendering information to.
 	VkDevice device;
 
+	// The object that stores the handle to our graphics queues.
+	// NOTE: queues are automatically created with our logical device,
+	// however we need to manually get a handle for them to interact
+	// with them explicitly. Queues are also automatically destroyed
+	// when the logical device is destroyed.
+	VkQueue graphicsQueue;
+
 	// The object that stores our custom callback messenger
 	VkDebugUtilsMessengerEXT debugMessenger;
 
@@ -268,6 +275,14 @@ private:
 		if (vkCreateDevice(physicalDevice, &createInfo, nullptr, &device) != VK_SUCCESS) {
 			throw std::runtime_error("[ERROR] Failed to create logical device!");
 		}
+
+		std::cout << "[INFO ] Logical device created!\n";
+
+		// Finally, we get a handle for the newly-created queues.
+		// NOTE: as we are creating a single queue, we can just use index 0 for it.
+		vkGetDeviceQueue(device, indices.graphicsFamily.value(), 0, &graphicsQueue);
+
+		std::cout << "[INFO ] Device queues retrieved!\n";
 	}
 
 	void createInstance() {
