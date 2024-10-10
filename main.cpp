@@ -122,6 +122,8 @@ private:
 		std::vector<VkPhysicalDevice> devices(deviceCount);
 		vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
 
+		std::cout << "[INFO ] Found " << deviceCount << " physical devices\n";
+
 		// Now, we check whether the available devices are suitable for our uses.
 		for (const auto &device : devices) {
 			if (isDeviceSuitable(device)) {
