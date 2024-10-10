@@ -88,6 +88,10 @@ private:
 	// implicitly destroyed when our instance is destroyed.
 	VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
 
+	// The object that stores the logical device to send
+	// rendering information to.
+	VkDevice device;
+
 	// The object that stores our custom callback messenger
 	VkDebugUtilsMessengerEXT debugMessenger;
 
@@ -115,6 +119,7 @@ private:
 		createInstance();
 		setupDebugMessenger();
 		pickPhysicalDevice();
+		createLogicalDevice();
     }
 
 	// This function will simply pick one of the available GPUs in the system
@@ -207,6 +212,62 @@ private:
 		}
 
 		return indices;
+	}
+
+	// This function creates the logical device starting from the physical
+	// device picked beforehand and based on its available queue families.
+	void createLogicalDevice() {
+		QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
+
+		VkDeviceQueueCreateInfo queueCreateInfo{};
+		queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+		queueCreateInfo.queueFamilyIndex = indices.graphicsFamily.value();
+		
+		// We don't really need more than one queue for now as the command buffers
+		// can be created on multiple threads and then can be submitted all at once 
+		// on the main thread.
+		queueCreateInfo.queueCount = 1;
+
+		// It is required to add a queue priority (a decimal number between 0.0 and
+		// 1.0) even if a single queue is present, like in this case.
+		float queuePriority = 1.0f;
+		queueCreateInfo.pQueuePriorities = &queuePriority;
+
+		// Here we specify which set of device features we want to use.
+		// NOTE: since we don't need anything special for now, we can just
+		// leave this struct empty (all its values are set to VK_FALSE).
+		VkPhysicalDeviceFeatures deviceFeatures{};
+
+		// Now we can effectively fill the logical device struct with
+		// the required information.
+		VkDeviceCreateInfo createInfo{};
+		createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+
+		// First, we add pointers to the queue creation info and 
+		// device features structs.
+		createInfo.pQueueCreateInfos = &queueCreateInfo;
+		createInfo.queueCreateInfoCount = 1;
+		createInfo.pEnabledFeatures = &deviceFeatures;
+
+		// The remaining information requires to specify extensions and
+		// validation layers. However, this time, they have to be
+		// device-specific, unlike with the Vulkan instance struct.
+		// NOTE: as said previously, in most recent versions of Vulkan,
+		// instance and device-specific validation layers are no longer
+		// differentiated. Furthermore, we don't need any specific extension
+		// now.
+		createInfo.enabledExtensionCount = 0;
+		if (enableValidationLayers) {
+			createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
+			createInfo.ppEnabledLayerNames = validationLayers.data();
+		} else {
+			createInfo.enabledLayerCount = 0;
+		}
+
+		// Now we can finally instantiate our logical device.
+		if (vkCreateDevice(physicalDevice, &createInfo, nullptr, &device) != VK_SUCCESS) {
+			throw std::runtime_error("[ERROR] Failed to create logical device!");
+		}
 	}
 
 	void createInstance() {
@@ -409,6 +470,9 @@ private:
     }
 
     void cleanup() {
+		// Destroys the logical device
+		vkDestroyDevice(device, nullptr);
+		
 		// If the validation layers were enabled, this destroys
 		// the debug messenger created beforehand.
 		if (enableValidationLayers) {
