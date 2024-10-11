@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <cstddef>
 #include <cstdint>
 #include <limits>
 #define GLFW_INCLUDE_VULKAN
@@ -121,6 +122,9 @@ private:
 	// The vector which will store the swap chain images
 	std::vector<VkImage> swapChainImages;
 
+	// The vector which will store the swap chain image views
+	std::vector<VkImageView> swapChainImageViews;
+
 	// The objects that store the image format and the extent
 	// of the images in the swap chain.
 	VkFormat swapChainImageFormat;
@@ -165,6 +169,7 @@ private:
 		pickPhysicalDevice();
 		createLogicalDevice();
 		createSwapChain();
+		createImageViews();
     }
 
 	void createSurface() {
@@ -542,6 +547,45 @@ private:
 		std::cout << "[INFO ] Image format and extent saved!\n";
 	}
 
+	void createImageViews() {
+		swapChainImageViews.resize(swapChainImages.size());
+
+		for (size_t i = 0; i < swapChainImages.size(); i++) {
+			VkImageViewCreateInfo createInfo{};
+			createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+			createInfo.image = swapChainImages[i];
+
+			// This specifies how the image data should be interpreted.
+			createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+			createInfo.format = swapChainImageFormat;
+
+			// This specifies how to manage colour channels.
+			// For example, for a monochrome texture, all channels 
+			// could be mapped to the red channel.
+			// In this case, we simply leave the default mapping.
+			createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+			createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+			createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+			createInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+
+			// This specifies what the image's purpose is and 
+			// which part of the image should be accessed.
+			// In this case, we use images as colour targets,
+			// with no mipmapping levels or multiple layers.
+			createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			createInfo.subresourceRange.baseMipLevel = 0;
+			createInfo.subresourceRange.levelCount = 1;
+			createInfo.subresourceRange.baseArrayLayer = 0;
+			createInfo.subresourceRange.layerCount = 1;
+
+			if (vkCreateImageView(device, &createInfo, nullptr, &swapChainImageViews[i]) != VK_SUCCESS) {
+				throw std::runtime_error("[ERROR] Failed to create image view!");
+			}
+		}
+
+		std::cout << "[INFO ] Image views created!\n";
+	}
+
 	void createInstance() {
 		// Check whether the required validation layers are available and throw
 		// an error if they are not.
@@ -742,6 +786,11 @@ private:
     }
 
     void cleanup() {
+		// Destroys the swap chain image views
+		for (auto imageView : swapChainImageViews) {
+			vkDestroyImageView(device, imageView, nullptr);
+		}
+
 		// Destroys the swap chain
 		vkDestroySwapchainKHR(device, swapChain, nullptr);
 
