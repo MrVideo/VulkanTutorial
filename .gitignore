@@ -4,6 +4,12 @@
 # Except files with extensions
 !*.*
 
+# Do not ignore the shader folder
+!shaders/
+
+# Do ignore the compiled shaders
+shaders/*.spv
+
 # Ignore compiler configuration
 compile_commands.json
 
